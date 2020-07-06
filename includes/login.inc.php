@@ -1,5 +1,7 @@
 <?php
 
+ini_set('display_errors','off');
+
 // This fill will perform HTTP digest authentication. This is not the most secure form of authentication so be carefull when using this.
 function authHttpDigest()
 {
@@ -42,6 +44,48 @@ function authHttpDigest()
       header('WWW-Authenticate: Digest realm="'.$realm.'",qop="auth",nonce="'.uniqid().'",opaque="'.$opaque.'"');
       die;
     }
+
+    $servername = $config['db_host'];
+    $username = $config['db_user'];
+    $password = $config['db_pass'];
+    $dbname = $config['db_name'];
+
+    $conn = new mysqli($servername, $username, $password, $dbname);
+    if ($conn->connect_error) {
+        die("获取用户失败，联系运维!");
+    } 
+     
+    //$conn = new mysqli($servername, $username, $password, $dbname);
+    //if ($conn->connect_error) {
+    //    die("连接数据库失败: " . $conn->connect_error);
+    //} 
+     
+    $sql = "SELECT * FROM users";
+    $result = $conn->query($sql);
+
+    $c_login = array();
+    $c_user = array();
+
+    if ($result->num_rows > 0) {
+        while($row = $result->fetch_assoc()) {
+            $c_users['username'] = $row['username'];
+            $c_users['password'] = $row['password'];
+            $c_servers['servers'] = $row['servers'];
+
+            if (!empty($c_servers['servers'])) {
+                $c_user['password'] = $c_users['password'];
+                $c_user['servers'] = explode(',',$c_servers['servers']);
+            } else {
+                $c_user['password'] = $c_users['password'];
+            }
+            $c_login[$c_users['username']] = $c_user;
+        }
+    } else {
+        die("用户列表为空,请联系管理员!");
+    }
+    $conn->close();
+
+    $config['login'] = $c_login;
 
     if (!isset($config['login'][$data['username']])) {
       header('HTTP/1.1 401 Unauthorized');

@@ -192,6 +192,7 @@ require 'includes/header.inc.php';
 <div id="sidebar">
 <div id="header">
 <h1 class="logo"><a href="?overview&amp;s=<?php echo $server['id']?>&amp;d=<?php echo $server['db']?>">phpRedisAdmin</a></h1>
+<h3>current user: <text style="color: red"><?php echo $login['name'] ?></text></h3>
 
 <p>
 <select id="server">

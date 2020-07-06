@@ -46,6 +46,5 @@ if (!empty($config['cookie_auth'])) {
       }
     }
 
-
     header('Location: logout.php');
 }

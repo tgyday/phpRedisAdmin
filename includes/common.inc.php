@@ -1,10 +1,9 @@
 <?php
+ini_set('display_errors','off');
+
 require dirname(__FILE__) . '/../vendor/autoload.php';
 
 define('PHPREDIS_ADMIN_PATH', dirname(__DIR__));
-
-
-
 
 // These includes are needed by each script.
 if(file_exists(PHPREDIS_ADMIN_PATH . '/includes/config.inc.php')){
@@ -19,13 +18,55 @@ if (isset($config['login'])) {
   require_once PHPREDIS_ADMIN_PATH . '/includes/login.inc.php';
 }
 
+//var_dump($config['servers']);
+//echo "<br>";
+
+$servername = $config['db_host'];
+$username = $config['db_user'];
+$password = $config['db_pass'];
+$dbname = $config['db_name'];
+ 
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn->connect_error) {
+    die("获取服务列表失败,联系运维!");
+} 
+ 
+$sql = "SELECT * FROM servers";
+$result = $conn->query($sql);
+
+$c_servers = array();
+$sum = array();
+$n = array();
+ 
+if ($result->num_rows > 0) {
+    while($row = $result->fetch_assoc()) {
+		$c_servers['name'] = $row['name'];
+		$c_servers['host'] = $row['host'];
+		$c_servers['port'] = (int)$row['port'];
+		$c_servers['filter'] = $row['filter'];
+		$c_servers['server_id'] = $row['server_id'];
+		array_push($n, $c_servers['server_id']);
+        //array_push($sum, $c_servers);
+        $sum[$c_servers['server_id']] = $c_servers;
+		$c_servers = array();
+    }
+} else {
+    die("服务列表为空,请联系管理员!");
+}
+$conn->close();
+
+$config['servers'] = $sum;
+
+//var_dump($config['servers']);
+//echo "<br>";
+//die();
 
 if (isset($login['servers'])) {
   $i = current($login['servers']);
 } else {
-  $i = 0;
+  //$i = 0;
+  $i = min($n);
 }
-
 
 if (isset($_GET['s']) && is_numeric($_GET['s']) && ($_GET['s'] < count($config['servers']))) {
   $i = $_GET['s'];
@@ -34,7 +75,6 @@ if (isset($_GET['s']) && is_numeric($_GET['s']) && ($_GET['s'] < count($config['
 $server            = $config['servers'][$i];
 $server['id']      = $i;
 $server['charset'] = isset($server['charset']) && $server['charset'] ? $server['charset'] : false;
-
 
 mb_internal_encoding('utf-8');
 
